@@ -17,10 +17,16 @@ class Dataset_Loader(dataset):
         file_path = os.path.join(self.dataset_source_folder_path, self.dataset_source_file_name)
 
         with open(file_path, 'r') as f:
-           for line in f:
-                elements = [int(i) for i in line.strip().split(',')] #CSV is comma seperated
-                y.append(elements[0]) #label is the first column
-                X.append(elements[1:]) #remaining values are features
+         for idx, line in enumerate(f):
+             line = line.strip()
+
+             # skip header if it exists
+             if idx == 0 and not line[0].isdigit():
+                 continue
+
+             elements = [int(i) for i in line.split(',')]
+             y.append(elements[0])      # first value = label
+             X.append(elements[1:])     # rest = features
 
         X = np.array(X, dtype=np.float32) / 255.0   #normalized pixels to [0,1]
         y = np.array(y, dtype=np.int64)
