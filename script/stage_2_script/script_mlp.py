@@ -18,32 +18,32 @@ if 1:
     data_obj = Dataset_Loader(
         'digit dataset',
         'MNIST-style csv dataset',
-        folder_path='../../data/stage_2_data',
+        folder_path='./data/stage_2_data', #changed data folder pathway
         file_name='train.csv'
     )
 
     method_obj = Method_MLP('multi-layer perceptron', '')
 
     result_obj = Result_Saver('saver', '')
-    result_obj.result_destination_folder_path = '../../result/stage_2_result/MLP_'
+    result_obj.result_destination_folder_path = './result/stage_2_result/MLP_' #changed result folder pathway so it is inside of project folder
     result_obj.result_destination_file_name = 'prediction_result'
 
     setting_obj = Setting_Train_Test_Split('train test split', '')
     setting_obj.test_dataset = Dataset_Loader(
         'digit test dataset',
         'MNIST-style csv test set',
-        folder_path='../../data/stage_2_data',
+        folder_path='./data/stage_2_data', #changed data folder pathway to be accurate
         file_name='test.csv'
     )
 
-    evaluate_obj = Evaluate_Accuracy('accuracy', '')
+    evaluate_obj = Evaluate_Accuracy('multi-metric evaluator', '') #changed accuracy to multi-metric
     # ------------------------------------------------------
 
     # ---- running section ---------------------------------
     print('************ Start ************')
     setting_obj.prepare(data_obj, method_obj, result_obj, evaluate_obj)
     setting_obj.print_setup_summary()
-    mean_score, std_score = setting_obj.load_run_save_evaluate()
+    result = setting_obj.load_run_save_evaluate() #changed to result since no longer doing k-fold
     print('************ Overall Performance ************')
     print('MLP Accuracy: ' + str(mean_score) + ' +/- ' + str(std_score))
     print('************ Finish ************')
