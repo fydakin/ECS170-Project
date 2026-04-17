@@ -1,5 +1,4 @@
-# macOS
-.DS_Store
+# macOS.DS_Store
 
 # Python
 __pycache__/
@@ -10,7 +9,6 @@ __pycache__/
 
 # datasets (IMPORTANT)
 data/
-*.csv
 
 # results
 result/
