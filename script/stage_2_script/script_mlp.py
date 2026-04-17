@@ -10,7 +10,7 @@ import torch
 # ---- Multi-Layer Perceptron script ----
 if 1:
     # ---- parameter section -------------------------------
-    np.random.seed(2)
+    np.random.seed(2) #Neural networks usually start with random weights, these fix the randomness
     torch.manual_seed(2)
     # ------------------------------------------------------
 

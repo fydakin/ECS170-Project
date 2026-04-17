@@ -9,7 +9,7 @@ import numpy as np
 class Method_MLP(method, nn.Module):
     data = None
     max_epoch = 20 #change if necessary
-    learning_rate = 1e-3
+    learning_rate = 1e-3 #change if necessary
 
     def __init__(self, mName, mDescription):
         method.__init__(self, mName, mDescription)
@@ -17,10 +17,12 @@ class Method_MLP(method, nn.Module):
 
         # Input = 784 features
         # Output = 10 classes
-        self.fc_layer_1 = nn.Linear(784, 256) #model input must accept 784 numbers
+
+        #Input (784) → Hidden (256) → Hidden (128) → Output (10)
+        self.fc_layer_1 = nn.Linear(784, 256) #model input must accept 784 numbers (28 x 28 images)
         self.activation_func_1 = nn.ReLU()
 
-        self.fc_layer_2 = nn.Linear(256, 128)
+        self.fc_layer_2 = nn.Linear(256, 128) #256 and 128 features (these can be changed)
         self.activation_func_2 = nn.ReLU()
 
         self.fc_layer_3 = nn.Linear(128, 10) #there are 10 classes
@@ -29,11 +31,11 @@ class Method_MLP(method, nn.Module):
         '''Forward propagation'''
         h1 = self.activation_func_1(self.fc_layer_1(x))
         h2 = self.activation_func_2(self.fc_layer_2(h1))
-        y_pred = self.fc_layer_3(h2)   # raw logits, no softmax here
+        y_pred = self.fc_layer_3(h2)   #outputs raw scores (logits), not probabilities
         return y_pred
 
     def train(self, X, y):
-        optimizer = torch.optim.Adam(self.parameters(), lr=self.learning_rate)
+        optimizer = torch.optim.Adam(self.parameters(), lr=self.learning_rate) #Adam = optimization algorithm (updates weights)
         loss_function = nn.CrossEntropyLoss()
         accuracy_evaluator = Evaluate_Accuracy('training evaluator', '')
 
@@ -44,6 +46,7 @@ class Method_MLP(method, nn.Module):
             y_pred = self.forward(X_tensor)
             train_loss = loss_function(y_pred, y_tensor)
 
+            #backpropogation
             optimizer.zero_grad()
             train_loss.backward()
             optimizer.step()
@@ -58,8 +61,12 @@ class Method_MLP(method, nn.Module):
                       'Loss:', train_loss.item())
 
     def test(self, X):
+        self.eval()  # switch to evaluation mode
         X_tensor = torch.FloatTensor(np.array(X))
-        y_pred = self.forward(X_tensor)
+    
+        with torch.no_grad():  #no gradients needed as during testing, we don’t update weights
+            y_pred = self.forward(X_tensor)
+
         return y_pred.max(1)[1]
 
     def run(self):
