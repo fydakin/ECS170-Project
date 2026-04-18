@@ -20,21 +20,43 @@ class Evaluate_Accuracy(evaluate):
 
         #used macro to average the metrics equally
         acc = accuracy_score(y_true, y_pred)
-        precision = precision_score(y_true, y_pred, average='macro')
-        recall = recall_score(y_true, y_pred, average='macro')
-        f1 = f1_score(y_true, y_pred, average='macro')
+        precision_weighted = precision_score(y_true, y_pred, average='weighted')
+        precision_macro = precision_score(y_true, y_pred, average='macro')
+        precision_micro = precision_score(y_true, y_pred, average='micro')
+
+        recall_weighted = recall_score(y_true, y_pred, average='weighted')
+        recall_macro = recall_score(y_true, y_pred, average='macro')
+        recall_micro = recall_score(y_true, y_pred, average='micro')
+
+
+        f1_weighted = f1_score(y_true, y_pred, average='weighted')
+        f1_macro = f1_score(y_true, y_pred, average='macro')
+        f1_micro = f1_score(y_true, y_pred, average='micro')
+
 
         #prints the metrics 
         print("Accuracy:",acc)
-        print("Precision (macro):",precision)
-        print("Recall (macro):",recall)
-        print("F1 (macro):", f1)
+        print("Precision (weighted):",precision_weighted)
+        print("Precision (macro):",precision_macro)
+        print("Precision (micro):",precision_micro)
+        print("Recall (weighted):",recall_weighted)
+        print("Recall (macro):",recall_macro)
+        print("Recall (micro):",recall_micro)
+        print("F1 (weighted):", f1_weighted)
+        print("F1 (macro):", f1_macro)
+        print("F1 (micro):", f1_micro)
+
 
         #returns all metrics
         return {
-            "acc": acc,
-            "precision": precision,
-            "recall": recall,
-            "f1": f1
+            'acc':                acc,
+            'f1_weighted':        f1_weighted,
+            'f1_macro':           f1_macro,
+            'f1_micro':           f1_micro,
+            'recall_weighted':    recall_weighted,
+            'recall_macro':       recall_macro,
+            'recall_micro':       recall_micro,
+            'precision_weighted': precision_weighted,
+            'precision_macro':    precision_macro,
+            'precision_micro':    precision_micro,
         }
-        
