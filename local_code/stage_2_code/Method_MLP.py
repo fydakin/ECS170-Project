@@ -34,7 +34,7 @@ class Method_MLP(method, nn.Module):
         y_pred = self.fc_layer_3(h2)   #outputs raw scores (logits), not probabilities
         return y_pred
 
-    def train(self, X, y):
+    def train_model(self, X, y):  #Name changed due to error in switching to eval mode
         optimizer = torch.optim.Adam(self.parameters(), lr=self.learning_rate) #Adam = optimization algorithm (updates weights)
         loss_function = nn.CrossEntropyLoss()
         accuracy_evaluator = Evaluate_Accuracy('training evaluator', '')
@@ -72,7 +72,7 @@ class Method_MLP(method, nn.Module):
     def run(self):
         print('method running...')
         print('--start training...')
-        self.train(self.data['train']['X'], self.data['train']['y'])
+        self.train_model(self.data['train']['X'], self.data['train']['y'])
         print('--start testing...')
         pred_y = self.test(self.data['test']['X'])
         return {'pred_y': pred_y, 'true_y': self.data['test']['y']}
