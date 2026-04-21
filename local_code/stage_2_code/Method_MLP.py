@@ -4,6 +4,7 @@ from local_code.stage_2_code.Evaluate_Accuracy import Evaluate_Accuracy
 import torch
 from torch import nn
 import numpy as np
+import matplotlib.pyplot as plt
 
 
 class Method_MLP(method, nn.Module):
@@ -14,6 +15,11 @@ class Method_MLP(method, nn.Module):
     def __init__(self, mName, mDescription):
         method.__init__(self, mName, mDescription)
         nn.Module.__init__(self)
+
+        self.epoch_numbers = []
+        self.train_losses = []
+        self.train_accuracies = []
+        self.test_accuracy = None
 
         # Input = 784 features
         # Output = 10 classes
@@ -42,6 +48,10 @@ class Method_MLP(method, nn.Module):
         X_tensor = torch.FloatTensor(np.array(X))
         y_tensor = torch.LongTensor(np.array(y))
 
+        epoch_numbers = []  #Data collection during training added for loss plots
+        train_losses = []
+        train_accuracies = []
+
         for epoch in range(self.max_epoch):
             y_pred = self.forward(X_tensor)
             train_loss = loss_function(y_pred, y_tensor)
@@ -59,6 +69,11 @@ class Method_MLP(method, nn.Module):
                 print('Epoch:', epoch,
                       'Accuracy:', accuracy_evaluator.evaluate(),
                       'Loss:', train_loss.item())
+            epoch_numbers.append(epoch + 1)
+            train_losses.append(train_loss.item())
+            train_accuracies.append(accuracy_evaluator.evaluate()['acc'])
+
+        return epoch_numbers, train_losses, train_accuracies
 
     def test(self, X):
         self.eval()  # switch to evaluation mode
@@ -68,11 +83,36 @@ class Method_MLP(method, nn.Module):
             y_pred = self.forward(X_tensor)
 
         return y_pred.max(1)[1]
+    
+    def plot_metrics(self, epoch_numbers, train_losses, train_accuracies, test_accuracy):
+        fig, axes = plt.subplots(1, 2, figsize=(10, 4))
+
+        axes[0].plot(epoch_numbers, train_losses, color='tab:red')
+        axes[0].set_title('Training Loss')
+        axes[0].set_xlabel('Epoch')
+        axes[0].set_ylabel('Loss')
+        axes[0].set_xticks(np.arange(0, max(epoch_numbers) + 1, max(epoch_numbers)//10))
+
+        axes[1].plot(epoch_numbers, train_accuracies, color='tab:blue')
+        axes[1].set_title('Training Accuracy')
+        axes[1].set_xlabel('Epoch')
+        axes[1].set_ylabel('Accuracy')
+        axes[1].set_ylim(0, 1)
+        axes[1].set_xticks(np.arange(0, max(epoch_numbers) + 1, max(epoch_numbers)//10))
+
+        plt.tight_layout()
+        #plt.savefig('training_metrics.png', dpi=150)
+        plt.show()
 
     def run(self):
         print('method running...')
         print('--start training...')
-        self.train_model(self.data['train']['X'], self.data['train']['y'])
+        epoch_numbers, train_losses, train_accuracies = self.train_model(self.data['train']['X'], self.data['train']['y'])
         print('--start testing...')
         pred_y = self.test(self.data['test']['X'])
+
+        self.epoch_numbers = epoch_numbers
+        self.train_losses = train_losses
+        self.train_accuracies = train_accuracies
+
         return {'pred_y': pred_y, 'true_y': self.data['test']['y']}

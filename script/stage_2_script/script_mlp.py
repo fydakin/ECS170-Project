@@ -47,5 +47,9 @@ if 1:
     print('************ Overall Performance ************')
     print('MLP Accuracy: ' + str(result)) #changed to only print result because there is no std
     print('************ Finish ************')
+    method_obj.plot_metrics(method_obj.epoch_numbers,
+                            method_obj.train_losses,
+                            method_obj.train_accuracies,
+                            method_obj.test_accuracy)
     # ------------------------------------------------------
     
