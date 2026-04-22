@@ -50,6 +50,7 @@ if 1:
     method_obj.plot_metrics(method_obj.epoch_numbers,
                             method_obj.train_losses,
                             method_obj.train_accuracies,
-                            method_obj.test_accuracy)
+                            method_obj.data['test']['y'],
+                            method_obj.y_probs)
     # ------------------------------------------------------
     
