@@ -12,15 +12,16 @@ class Dataset_Loader(dataset):
 
     def load(self):
         print(f'loading data from {self.dataset_source_file_name}...')
-        X = []
-        y = []
+        
 
         file_path = os.path.join(self.dataset_source_folder_path, self.dataset_source_file_name)
 
         with open(file_path, 'rb') as f:
           data = pickle.load(f)
 
-        X_train, y_train = [], []
+        X_train = []
+        y_train = []
+        
         for instance in data['train']:
             img   = np.array(instance['image'], dtype=np.float32)  # (112, 92, 3)
             label = instance['label'] - 1                          # shift 1-40 → 0-39

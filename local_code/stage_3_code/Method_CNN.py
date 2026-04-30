@@ -8,10 +8,10 @@ from sklearn.metrics import roc_curve, auc
 from sklearn.preprocessing import label_binarize
 
 from local_code.base_class.method import method
-from local_code.stage_2_code.Evaluate_Accuracy import Evaluate_Accuracy
+from local_code.stage_3_code.Evaluate_Accuracy import Evaluate_Accuracy
 
 
-class Method_MLP(method, nn.Module):
+class Method_CNN(method, nn.Module):
     data = None
     max_epoch = 50 #change if necessary
     learning_rate = 1e-2 #change if necessary

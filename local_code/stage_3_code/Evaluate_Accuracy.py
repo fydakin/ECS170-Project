@@ -6,7 +6,7 @@ Concrete Evaluate class for a specific evaluation metrics
 # License: TBD
 
 from local_code.base_class.evaluate import evaluate
-from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
+from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, roc_auc_score
 from sklearn.preprocessing import label_binarize
 import numpy as np
 
