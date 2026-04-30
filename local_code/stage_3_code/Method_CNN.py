@@ -1,3 +1,4 @@
+from local_code.base_class import dataset
 import torch
 import torch.nn.functional as F
 from torch import nn
@@ -22,27 +23,35 @@ class Method_MLP(method, nn.Module):
         self.epoch_numbers = []
         self.train_losses = []
         self.train_accuracies = []
-        self.test_accuracy = None
-        self.y_probs = None
+        #self.test_accuracy = None
+        #self.y_probs = None
 
-        # Input = 784 features
-        # Output = 10 classes
+        # --- CNN layers ---
+        self.conv1 = nn.Conv2d(in_channels=1, out_channels=32, kernel_size=3, padding=1)
+        self.bn1   = nn.BatchNorm2d(32)
 
-        #Input (784) → Hidden (256) → Hidden (128) → Output (10)
-        self.fc_layer_1 = nn.Linear(784, 256) #model input must accept 784 numbers (28 x 28 images)
-        self.activation_func_1 = nn.ReLU()
+        self.conv2 = nn.Conv2d(32, 64, kernel_size=3, padding=1)
+        self.bn2   = nn.BatchNorm2d(64)
 
-        self.fc_layer_2 = nn.Linear(256, 128) #256 and 128 features (these can be changed)
-        self.activation_func_2 = nn.ReLU()
+        self.pool  = nn.MaxPool2d(2, 2)
+        self.dropout = nn.Dropout(0.5)
 
-        self.fc_layer_3 = nn.Linear(128, 10) #there are 10 classes
+       
+        self.fc1 = nn.Linear(64 * 28 * 23, 256) # 41,984 features
+        self.fc2 = nn.Linear(256, 40) # 40 classes
 
     def forward(self, x):
-        '''Forward propagation'''
-        h1 = self.activation_func_1(self.fc_layer_1(x))
-        h2 = self.activation_func_2(self.fc_layer_2(h1))
-        y_pred = self.fc_layer_3(h2)   #outputs raw scores (logits), not probabilities
-        return y_pred
+         # x shape coming in: (batch, 3, H, W) — take just 1 channel
+        x = x[:, 0:1, :, :] # → (batch, 1, H, W)
+
+        x = self.pool(F.relu(self.bn1(self.conv1(x)))) # → (batch, 32, H/2, W/2)
+        x = self.pool(F.relu(self.bn2(self.conv2(x)))) # → (batch, 64, H/4, W/4)
+
+        x = torch.flatten(x, 1) # → (batch, 64*H/4*W/4)
+        x = F.relu(self.fc1(x))
+        x = self.dropout(x)
+        x = self.fc2(x) # → (batch, num_classes)
+        return x
 
     def train_model(self, X, y):  #Name changed due to error in switching to eval mode
         optimizer = torch.optim.Adam(self.parameters(), lr=self.learning_rate) #Adam = optimization algorithm (updates weights)
@@ -52,30 +61,42 @@ class Method_MLP(method, nn.Module):
         X_tensor = torch.FloatTensor(np.array(X))
         y_tensor = torch.LongTensor(np.array(y))
 
+        dataset    = torch.utils.data.TensorDataset(X_tensor, y_tensor)
+        dataloader = torch.utils.data.DataLoader(dataset, batch_size=32, shuffle=True)
+
         epoch_numbers = []  #Data collection during training added for loss plots
         train_losses = []
         train_accuracies = []
 
         for epoch in range(self.max_epoch):
-            y_pred = self.forward(X_tensor)
-            train_loss = loss_function(y_pred, y_tensor)
+            self.train()  # set to train mode each epoch
+            epoch_loss = 0
 
-            #backpropogation
-            optimizer.zero_grad()
-            train_loss.backward()
-            optimizer.step()
+            for X_batch, y_batch in dataloader:
+                y_pred = self.forward(X_batch)
+                loss   = loss_function(y_pred, y_batch)
 
-            if epoch % 1 == 0:
-                accuracy_evaluator.data = {
-                    'true_y': y_tensor,
-                    'pred_y': y_pred.max(1)[1]
-                }
-                print('Epoch:', epoch,
-                      'Accuracy:', accuracy_evaluator.evaluate(),
-                      'Loss:', train_loss.item())
+                optimizer.zero_grad()
+                loss.backward()
+                optimizer.step()
+                epoch_loss += loss.item()
+
+            # evaluate on full set each epoch
+            self.eval()
+            with torch.no_grad():
+                y_pred_full = self.forward(X_tensor)
+
+            accuracy_evaluator.data = {
+                'true_y': y_tensor,
+                'pred_y': y_pred_full.max(1)[1]
+            }
+            avg_loss = epoch_loss / len(dataloader)
+            acc = accuracy_evaluator.evaluate()['acc']
+
+            print(f'Epoch: {epoch}  Accuracy: {acc:.4f}  Loss: {avg_loss:.4f}')
             epoch_numbers.append(epoch + 1)
-            train_losses.append(train_loss.item())
-            train_accuracies.append(accuracy_evaluator.evaluate()['acc'])
+            train_losses.append(avg_loss)
+            train_accuracies.append(acc)
 
         return epoch_numbers, train_losses, train_accuracies
 
@@ -89,7 +110,7 @@ class Method_MLP(method, nn.Module):
 
         return y_pred.max(1)[1], y_probs
     
-    def plot_metrics(self, epoch_numbers, train_losses, train_accuracies, y_true, y_probs, n_classes = 10):
+    def plot_metrics(self, epoch_numbers, train_losses, train_accuracies, y_true, y_probs, n_classes = 40):
         fig, axes = plt.subplots(1, 3, figsize=(15, 4))
 
         axes[0].plot(epoch_numbers, train_losses, color='tab:red')
@@ -136,6 +157,6 @@ class Method_MLP(method, nn.Module):
         self.epoch_numbers = epoch_numbers
         self.train_losses = train_losses
         self.train_accuracies = train_accuracies
-        self.y_probs = y_probs
+        self.y_probs = y_probs.numpy()
 
         return {'pred_y': pred_y, 'true_y': self.data['test']['y']}

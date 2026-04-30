@@ -1,6 +1,7 @@
 from local_code.base_class.dataset import dataset
 import numpy as np
 import os
+import pickle
 
 
 class Dataset_Loader(dataset):
@@ -16,19 +17,38 @@ class Dataset_Loader(dataset):
 
         file_path = os.path.join(self.dataset_source_folder_path, self.dataset_source_file_name)
 
-        with open(file_path, 'r') as f:
-         for idx, line in enumerate(f):
-             line = line.strip()
+        with open(file_path, 'rb') as f:
+          data = pickle.load(f)
 
-             # skip header if it exists
-             if idx == 0 and not line[0].isdigit():
-                 continue
+        X_train, y_train = [], []
+        for instance in data['train']:
+            img   = np.array(instance['image'], dtype=np.float32)  # (112, 92, 3)
+            label = instance['label'] - 1                          # shift 1-40 → 0-39
+            X_train.append(img)
+            y_train.append(label)
 
-             elements = [int(i) for i in line.split(',')]
-             y.append(elements[0])      # first value = label
-             X.append(elements[1:])     # rest = features
+        X_test, y_test = [], []
+        for instance in data['test']:
+            img   = np.array(instance['image'], dtype=np.float32)
+            label = instance['label'] - 1
+            X_test.append(img)
+            y_test.append(label)
 
-        X = np.array(X, dtype=np.float32) / 255.0   #normalized pixels to [0,1]
-        y = np.array(y, dtype=np.int64)
+        # Stack into arrays
+        X_train = np.stack(X_train) / 255.0   # (360, 112, 92, 3)
+        X_test  = np.stack(X_test)  / 255.0   # (40,  112, 92, 3)
 
-        return {'X': X, 'y': y}
+        # Transpose to PyTorch format: (N, C, H, W)
+        X_train = X_train.transpose(0, 3, 1, 2)  # (360, 3, 112, 92)
+        X_test  = X_test.transpose(0, 3, 1, 2)   # (40,  3, 112, 92)
+
+        return {
+            'train': {
+                'X': X_train,
+                'y': np.array(y_train, dtype=np.int64)
+            },
+            'test': {
+                'X': X_test,
+                'y': np.array(y_test, dtype=np.int64)
+            }
+        }
