@@ -7,7 +7,8 @@ Concrete Evaluate class for a specific evaluation metrics
 
 from local_code.base_class.evaluate import evaluate
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
-
+from sklearn.preprocessing import label_binarize
+import numpy as np
 
 class Evaluate_Accuracy(evaluate):
     data = None
@@ -33,6 +34,15 @@ class Evaluate_Accuracy(evaluate):
         f1_macro = f1_score(y_true, y_pred, average='macro')
         f1_micro = f1_score(y_true, y_pred, average='micro')
 
+        auc_macro = None
+        if 'y_score' in self.data and self.data['y_score'] is not None:
+            classes = np.unique(y_true)
+            y_true_bin = label_binarize(y_true, classes=classes)
+            y_score = self.data['y_score']
+            if hasattr(y_score, 'numpy'):
+                y_score = y_score.numpy()
+            auc_macro = roc_auc_score(y_true_bin, y_score, average='macro', multi_class='ovr')
+            print("AUC (macro, OvR):", auc_macro)
 
         #prints the metrics 
         print("Accuracy:",acc)
