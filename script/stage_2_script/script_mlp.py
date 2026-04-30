@@ -45,7 +45,12 @@ if 1:
     setting_obj.print_setup_summary()
     result = setting_obj.load_run_save_evaluate() #changed to result since no longer doing k-fold
     print('************ Overall Performance ************')
-    print('MLP Accuracy: ' + str(mean_score) + ' +/- ' + str(std_score))
+    print('MLP Accuracy: ' + str(result)) #changed to only print result because there is no std
     print('************ Finish ************')
+    method_obj.plot_metrics(method_obj.epoch_numbers,
+                            method_obj.train_losses,
+                            method_obj.train_accuracies,
+                            method_obj.data['test']['y'],
+                            method_obj.y_probs)
     # ------------------------------------------------------
     
