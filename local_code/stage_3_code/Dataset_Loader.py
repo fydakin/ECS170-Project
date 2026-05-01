@@ -12,44 +12,64 @@ class Dataset_Loader(dataset):
 
     def load(self):
         print(f'loading data from {self.dataset_source_file_name}...')
-        
 
-        file_path = os.path.join(self.dataset_source_folder_path, self.dataset_source_file_name)
+        file_path = os.path.join(
+            self.dataset_source_folder_path,
+            self.dataset_source_file_name
+        )
 
         with open(file_path, 'rb') as f:
-          data = pickle.load(f)
+            data = pickle.load(f)
 
-        X_train = []
-        y_train = []
-        
-        for instance in data['train']:
-            img   = np.array(instance['image'], dtype=np.float32)  # (112, 92, 3)
-            label = instance['label'] - 1                          # shift 1-40 → 0-39
-            X_train.append(img)
-            y_train.append(label)
-
-        X_test, y_test = [], []
-        for instance in data['test']:
-            img   = np.array(instance['image'], dtype=np.float32)
-            label = instance['label'] - 1
-            X_test.append(img)
-            y_test.append(label)
-
-        # Stack into arrays
-        X_train = np.stack(X_train) / 255.0   # (360, 112, 92, 3)
-        X_test  = np.stack(X_test)  / 255.0   # (40,  112, 92, 3)
-
-        # Transpose to PyTorch format: (N, C, H, W)
-        X_train = X_train.transpose(0, 3, 1, 2)  # (360, 3, 112, 92)
-        X_test  = X_test.transpose(0, 3, 1, 2)   # (40,  3, 112, 92)
+        X_train, y_train = self.process_split(data['train'])
+        X_test, y_test = self.process_split(data['test'])
 
         return {
             'train': {
                 'X': X_train,
-                'y': np.array(y_train, dtype=np.int64)
+                'y': y_train
             },
             'test': {
                 'X': X_test,
-                'y': np.array(y_test, dtype=np.int64)
+                'y': y_test
             }
         }
+
+    def process_split(self, split_data):
+        X = []
+        y = []
+
+        dataset_name = self.dataset_source_file_name.upper()
+
+        for instance in split_data:
+            img = np.array(instance['image'], dtype=np.float32)
+            label = instance['label']
+
+            #ORL labels are 1-40, so convert to 0-39 for PyTorch
+            if dataset_name == 'ORL':
+                label = label - 1
+
+                #(height, width, channels)
+                #ORL is grayscale but stored as 3 identical RGB channels (R = G = B)
+                #Use only one channel: (112, 92, 3) -> (112, 92)
+                if img.ndim == 3:
+                    img = img[:, :, 0]
+
+            #Normalize pixel values from 0-255 to 0-1
+            img = img / 255.0
+
+            #MNIST/ORL grayscale: (H, W) -> (1, H, W)
+            if img.ndim == 2:
+                img = np.expand_dims(img, axis=0)
+
+            #CIFAR color: (H, W, C) -> (C, H, W)
+            elif img.ndim == 3:
+                img = img.transpose(2, 0, 1)
+
+            X.append(img)
+            y.append(label)
+
+        X = np.stack(X)
+        y = np.array(y, dtype=np.int64)
+
+        return X, y
