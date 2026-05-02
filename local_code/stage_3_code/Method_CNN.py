@@ -41,8 +41,9 @@ class Method_CNN(method, nn.Module):
         self.fc2 = nn.Linear(256, 40) # 40 classes
 
     def forward(self, x):
+        #already put in datatset loader
          # x shape coming in: (batch, 3, H, W) — take just 1 channel
-        x = x[:, 0:1, :, :] # → (batch, 1, H, W)
+        #x = x[:, 0:1, :, :] # → (batch, 1, H, W)
 
         x = self.pool(F.relu(self.bn1(self.conv1(x)))) # → (batch, 32, H/2, W/2)
         x = self.pool(F.relu(self.bn2(self.conv2(x)))) # → (batch, 64, H/4, W/4)
