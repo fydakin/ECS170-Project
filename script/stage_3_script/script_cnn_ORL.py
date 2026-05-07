@@ -29,11 +29,13 @@ if 1:
     num_classes=40,
     input_height=112,
     input_width=92
-)
+    )
+    method_obj.learning_rate = 1e-3
+    method_obj.max_epoch = 100
 
     result_obj = Result_Saver('saver', '')
     result_obj.result_destination_folder_path = './result/stage_3_result/CNN_' #changed result folder pathway so it is inside of project folder
-    result_obj.result_destination_file_name = 'prediction_result'
+    result_obj.result_destination_file_name = 'ORL_prediction_result'
 
     setting_obj = Setting_Train_Test_Split('train test split', '')
 

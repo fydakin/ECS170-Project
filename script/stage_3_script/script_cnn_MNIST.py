@@ -33,7 +33,7 @@ if 1:
 
     result_obj = Result_Saver('saver', '')
     result_obj.result_destination_folder_path = './result/stage_3_result/CNN_' #changed result folder pathway so it is inside of project folder
-    result_obj.result_destination_file_name = 'prediction_result'
+    result_obj.result_destination_file_name = 'MNIST_prediction_result'
 
     setting_obj = Setting_Train_Test_Split('train test split', '')
 

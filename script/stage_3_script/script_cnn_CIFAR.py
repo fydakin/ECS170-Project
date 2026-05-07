@@ -15,7 +15,7 @@ if 1:
     # ------------------------------------------------------
 
     # ---- object initialization section -------------------
-    ddata_obj = Dataset_Loader(
+    data_obj = Dataset_Loader(
     'CIFAR dataset',
     'object dataset',
     folder_path='./data/stage_3_data',
@@ -28,11 +28,11 @@ if 1:
     num_classes=10,
     input_height=32,
     input_width=32
-)   
+    )   
 
     result_obj = Result_Saver('saver', '')
-    result_obj.result_destination_folder_path = './result/stage_3_result/CNN_' #changed result folder pathway so it is inside of project folder
-    result_obj.result_destination_file_name = 'prediction_result'
+    result_obj.result_destination_folder_path = './result/stage_3_result' #changed result folder pathway so it is inside of project folder
+    result_obj.result_destination_file_name = 'CIFAR_prediction_result'
 
     setting_obj = Setting_Train_Test_Split('train test split', '')
 

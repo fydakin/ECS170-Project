@@ -16,7 +16,7 @@ class Method_CNN(method, nn.Module):
     max_epoch = 50 #change if necessary
     learning_rate = 1e-2 #change if necessary
 
-    def __init__(self, mName, mDescription):
+    def __init__(self, mName, mDescription, input_channels, num_classes, input_height, input_width):
         method.__init__(self, mName, mDescription)
         nn.Module.__init__(self)
 
@@ -27,7 +27,7 @@ class Method_CNN(method, nn.Module):
         #self.y_probs = None
 
         # --- CNN layers ---
-        self.conv1 = nn.Conv2d(in_channels=1, out_channels=32, kernel_size=3, padding=1)
+        self.conv1 = nn.Conv2d(in_channels=input_channels, out_channels=32, kernel_size=3, padding=1)
         self.bn1   = nn.BatchNorm2d(32)
 
         self.conv2 = nn.Conv2d(32, 64, kernel_size=3, padding=1)
@@ -36,9 +36,11 @@ class Method_CNN(method, nn.Module):
         self.pool  = nn.MaxPool2d(2, 2)
         self.dropout = nn.Dropout(0.5)
 
-       
-        self.fc1 = nn.Linear(64 * 28 * 23, 256) # 41,984 features
-        self.fc2 = nn.Linear(256, 40) # 40 classes
+        pooled_h = input_height // 4
+        pooled_w = input_width // 4
+
+        self.fc1 = nn.Linear(64 * pooled_h * pooled_w, 256) # 41,984 features
+        self.fc2 = nn.Linear(256, num_classes) # 40 classes
 
     def forward(self, x):
         #already put in datatset loader
@@ -111,42 +113,48 @@ class Method_CNN(method, nn.Module):
 
         return y_pred.max(1)[1], y_probs
     
-    def plot_metrics(self, epoch_numbers, train_losses, train_accuracies, y_true, y_probs, n_classes = 40):
-        fig, axes = plt.subplots(1, 3, figsize=(15, 4))
+    def plot_metrics(self, epoch_numbers, train_losses, train_accuracies, y_true, y_probs, AUC = True, n_classes = 40):
+        fig, axes = plt.subplots(1, 2, figsize=(10, 4))
 
         axes[0].plot(epoch_numbers, train_losses, color='tab:red')
         axes[0].set_title('Training Loss')
         axes[0].set_xlabel('Epoch')
         axes[0].set_ylabel('Loss')
-        axes[0].set_xticks(np.arange(0, max(epoch_numbers) + 1, max(epoch_numbers)//10))
+        axes[0].set_xticks(np.arange(0, max(epoch_numbers) + 1, max(max(epoch_numbers)//10,1)))
 
         axes[1].plot(epoch_numbers, train_accuracies, color='tab:blue')
         axes[1].set_title('Training Accuracy')
         axes[1].set_xlabel('Epoch')
         axes[1].set_ylabel('Accuracy')
         axes[1].set_ylim(0, 1)
-        axes[1].set_xticks(np.arange(0, max(epoch_numbers) + 1, max(epoch_numbers)//10))
-
-        classes    = list(range(n_classes))
-        y_true_bin = label_binarize(y_true, classes=classes)
-
-        colors = plt.cm.tab10(np.linspace(0, 1, n_classes))
-        for i, color in zip(classes, colors):
-            fpr, tpr, _ = roc_curve(y_true_bin[:, i], y_probs[:, i])
-            roc_auc     = auc(fpr, tpr)
-            axes[2].plot(fpr, tpr, color=color, lw=1.2, alpha=0.6, label=f'Class {i} (AUC={roc_auc:.2f})')
-
-        axes[2].plot([0, 1], [0, 1], 'k:', lw=1)
-        axes[2].set_xlim(0, 1)
-        axes[2].set_ylim(0, 1.05)
-        axes[2].set_title('ROC Curve (One-vs-Rest)')
-        axes[2].set_xlabel('False Positive Rate')
-        axes[2].set_ylabel('True Positive Rate')
-        axes[2].legend(loc='lower right', fontsize=6, ncol=2)
+        axes[1].set_xticks(np.arange(0, max(epoch_numbers) + 1, max(max(epoch_numbers)//10,1)))
 
         plt.tight_layout()
         #plt.savefig('training_metrics.png', dpi=150)
         plt.show()
+
+        if AUC == True:
+            fig, axes = plt.subplots(1, 1, figsize=(10, 8))
+            classes    = list(range(n_classes))
+            y_true_bin = label_binarize(y_true, classes=classes)
+
+            colors = plt.cm.tab10(np.linspace(0, 1, n_classes))
+            for i, color in zip(classes, colors):
+                fpr, tpr, _ = roc_curve(y_true_bin[:, i], y_probs[:, i])
+                roc_auc     = auc(fpr, tpr)
+                axes.plot(fpr, tpr, color=color, lw=1.2, alpha=0.6, label=f'Class {i} (AUC={roc_auc:.2f})')
+
+            axes.plot([0, 1], [0, 1], 'k:', lw=1)
+            axes.set_xlim(0, 1)
+            axes.set_ylim(0, 1.05)
+            axes.set_title('ROC Curve (One-vs-Rest)')
+            axes.set_xlabel('False Positive Rate')
+            axes.set_ylabel('True Positive Rate')
+            axes.legend(loc='lower right', fontsize=6, ncol=2)
+
+            plt.tight_layout()
+            #plt.savefig('training_metrics.png', dpi=150)
+            plt.show()
 
     def run(self):
         print('method running...')

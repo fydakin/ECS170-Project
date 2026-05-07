@@ -11,20 +11,18 @@ class Setting_Train_Test_Split(setting):
     def load_run_save_evaluate(self):
         #took out code that split the dataset as its already been split for us
         #load pre-split training dataset
-        train_data = self.dataset.load()
+        all_data = self.dataset.load()
 
-        #load pre-split testing dataset
-        test_data = self.test_dataset.load()
 
         #run MethodModule
         self.method.data = {
             'train': {
-                'X': train_data['X'],
-                'y': train_data['y']
+                'X': all_data['train']['X'],
+                'y': all_data['train']['y']
             },
             'test': {
-                'X': test_data['X'],
-                'y': test_data['y']
+                'X': all_data['test']['X'],
+                'y': all_data['test']['y']
             }
         }
 
