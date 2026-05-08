@@ -15,30 +15,41 @@ class Method_CNN(method, nn.Module):
     data = None
     max_epoch = 50 #change if necessary
     learning_rate = 1e-2 #change if necessary
+    #changed __init__ to fit MNIST
+    def __init__(self, mName, mDescription,
+             input_channels=1,
+             num_classes=10,
+             input_height=28,
+             input_width=28):
 
-    def __init__(self, mName, mDescription):
         method.__init__(self, mName, mDescription)
         nn.Module.__init__(self)
 
         self.epoch_numbers = []
         self.train_losses = []
         self.train_accuracies = []
-        #self.test_accuracy = None
-        #self.y_probs = None
 
-        # --- CNN layers ---
-        self.conv1 = nn.Conv2d(in_channels=1, out_channels=32, kernel_size=3, padding=1)
-        self.bn1   = nn.BatchNorm2d(32)
+        self.max_epoch = 20
+        self.learning_rate = 0.001
 
-        self.conv2 = nn.Conv2d(32, 64, kernel_size=3, padding=1)
-        self.bn2   = nn.BatchNorm2d(64)
+         # CNN Layers
+        self.conv1 = nn.Conv2d(input_channels, 32, 3, padding=1)
+        self.bn1 = nn.BatchNorm2d(32)
 
-        self.pool  = nn.MaxPool2d(2, 2)
+        self.conv2 = nn.Conv2d(32, 64, 3, padding=1)
+        self.bn2 = nn.BatchNorm2d(64)
+
+        self.pool = nn.MaxPool2d(2, 2)
+
         self.dropout = nn.Dropout(0.5)
 
-       
-        self.fc1 = nn.Linear(64 * 28 * 23, 256) # 41,984 features
-        self.fc2 = nn.Linear(256, 40) # 40 classes
+        # MNIST size calculations:
+        # 28x28
+        # after pool -> 14x14
+        # after second pool -> 7x7
+
+        self.fc1 = nn.Linear(64 * 7 * 7, 128)
+        self.fc2 = nn.Linear(128, num_classes)
 
     def forward(self, x):
         #already put in datatset loader
@@ -110,8 +121,8 @@ class Method_CNN(method, nn.Module):
             y_probs  = torch.softmax(y_pred, dim=1)
 
         return y_pred.max(1)[1], y_probs
-    
-    def plot_metrics(self, epoch_numbers, train_losses, train_accuracies, y_true, y_probs, n_classes = 40):
+    #changed classes in plot_metrics to 10
+    def plot_metrics(self, epoch_numbers, train_losses, train_accuracies, y_true, y_probs, n_classes = 10):
         fig, axes = plt.subplots(1, 3, figsize=(15, 4))
 
         axes[0].plot(epoch_numbers, train_losses, color='tab:red')
