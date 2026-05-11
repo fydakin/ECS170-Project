@@ -13,8 +13,8 @@ from local_code.stage_3_code.Evaluate_Accuracy import Evaluate_Accuracy
 
 class Method_CNN(method, nn.Module):
     data = None
-    max_epoch = 50 #change if necessary
-    learning_rate = 1e-2 #change if necessary
+    max_epoch = 20 #change if necessary
+    learning_rate = 1e-3 #change if necessary
     #changed __init__ to fit MNIST
     def __init__(self, mName, mDescription,
              input_channels=1,
@@ -31,6 +31,11 @@ class Method_CNN(method, nn.Module):
 
         self.max_epoch = 20
         self.learning_rate = 0.001
+
+        #added to automatically use GPU if available
+        self.device = torch.device(
+            "cuda" if torch.cuda.is_available() else "cpu"
+        )
 
          # CNN Layers
         self.conv1 = nn.Conv2d(input_channels, 32, 3, padding=1)
@@ -51,6 +56,9 @@ class Method_CNN(method, nn.Module):
         self.fc1 = nn.Linear(64 * 7 * 7, 128)
         self.fc2 = nn.Linear(128, num_classes)
 
+        #added to move model to gpu/cpu device 
+        self.to(self.device)
+
     def forward(self, x):
         #already put in datatset loader
          # x shape coming in: (batch, 3, H, W) — take just 1 channel
@@ -70,11 +78,23 @@ class Method_CNN(method, nn.Module):
         loss_function = nn.CrossEntropyLoss()
         accuracy_evaluator = Evaluate_Accuracy('training evaluator', '')
 
-        X_tensor = torch.FloatTensor(np.array(X))
-        y_tensor = torch.LongTensor(np.array(y))
+        #move tensors to gpu/cpu device 
+        X_tensor = torch.FloatTensor(
+            np.array(X)
+        ).to(self.device)
+
+        y_tensor = torch.LongTensor(
+            np.array(y)
+        ).to(self.device)
+
+        # create PyTorch dataset
+        dataset = torch.utils.data.TensorDataset(
+            X_tensor,
+            y_tensor
+        )
 
         dataset    = torch.utils.data.TensorDataset(X_tensor, y_tensor)
-        dataloader = torch.utils.data.DataLoader(dataset, batch_size=32, shuffle=True)
+        dataloader = torch.utils.data.DataLoader(dataset, batch_size=64, shuffle=True) #changed batch size from 32 to 64
 
         epoch_numbers = []  #Data collection during training added for loss plots
         train_losses = []
@@ -85,6 +105,10 @@ class Method_CNN(method, nn.Module):
             epoch_loss = 0
 
             for X_batch, y_batch in dataloader:
+                #double checks each batch is on gpu
+                X_batch = X_batch.to(self.device)
+                y_batch = y_batch.to(self.device)
+
                 y_pred = self.forward(X_batch)
                 loss   = loss_function(y_pred, y_batch)
 
@@ -98,9 +122,10 @@ class Method_CNN(method, nn.Module):
             with torch.no_grad():
                 y_pred_full = self.forward(X_tensor)
 
+            #changed to move back to cpu 
             accuracy_evaluator.data = {
-                'true_y': y_tensor,
-                'pred_y': y_pred_full.max(1)[1]
+                'true_y': y_tensor.cpu(),
+                'pred_y': y_pred_full.argmax(1).cpu()
             }
             avg_loss = epoch_loss / len(dataloader)
             acc = accuracy_evaluator.evaluate()['acc']
@@ -114,25 +139,25 @@ class Method_CNN(method, nn.Module):
 
     def test(self, X):
         self.eval()  # switch to evaluation mode
-        X_tensor = torch.FloatTensor(np.array(X))
+        X_tensor = torch.FloatTensor(np.array(X)).to(self.device) #move test data to device
     
         with torch.no_grad():  #no gradients needed as during testing, we don’t update weights
             y_pred = self.forward(X_tensor)
             y_probs  = torch.softmax(y_pred, dim=1)
 
-        return y_pred.max(1)[1], y_probs
+        return y_pred.argmax(1).cpu(), y_probs.cpu() #move outputs back to cpu
     #changed classes in plot_metrics to 10
     def plot_metrics(self, epoch_numbers, train_losses, train_accuracies, y_true, y_probs, n_classes = 10):
-        fig, axes = plt.subplots(1, 3, figsize=(15, 4))
+        fig, axes = plt.subplots(1, 3, figsize=(12, 4))
 
         axes[0].plot(epoch_numbers, train_losses, color='tab:red')
-        axes[0].set_title('Training Loss')
+        axes[0].set_title('CNN Training Loss')
         axes[0].set_xlabel('Epoch')
         axes[0].set_ylabel('Loss')
         axes[0].set_xticks(np.arange(0, max(epoch_numbers) + 1, max(epoch_numbers)//10))
 
         axes[1].plot(epoch_numbers, train_accuracies, color='tab:blue')
-        axes[1].set_title('Training Accuracy')
+        axes[1].set_title('CNN Training Accuracy')
         axes[1].set_xlabel('Epoch')
         axes[1].set_ylabel('Accuracy')
         axes[1].set_ylim(0, 1)
@@ -150,7 +175,7 @@ class Method_CNN(method, nn.Module):
         axes[2].plot([0, 1], [0, 1], 'k:', lw=1)
         axes[2].set_xlim(0, 1)
         axes[2].set_ylim(0, 1.05)
-        axes[2].set_title('ROC Curve (One-vs-Rest)')
+        axes[2].set_title('CNN ROC Curve')
         axes[2].set_xlabel('False Positive Rate')
         axes[2].set_ylabel('True Positive Rate')
         axes[2].legend(loc='lower right', fontsize=6, ncol=2)
