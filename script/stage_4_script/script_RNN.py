@@ -14,8 +14,9 @@ if 1:
     # ---- parameter section -------------------------------
     np.random.seed(2)
     torch.manual_seed(2)
-
-    max_epoch = 10
+    
+    #EDIT HERE, do not not touch epoch and learning rate values in Method_RNN.py
+    max_epoch = 10 ##will overfit if too large because our datatset is not big
     learning_rate = 1e-3
     embedding_dim = 128
     hidden_size = 128

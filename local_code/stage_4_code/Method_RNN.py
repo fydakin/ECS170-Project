@@ -10,8 +10,9 @@ from local_code.stage_4_code.Evaluate_Accuracy_Classification import Evaluate_Ac
 
 
 class Method_RNN(method, nn.Module):
+    #DO NOT EDIT THESE VALUES. Edit the ones in script_RNN.py
     data = None
-    max_epoch = 10 #will overfit if too large 
+    max_epoch = 10 
     learning_rate = 1e-3
 
     def __init__(
