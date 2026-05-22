@@ -7,7 +7,7 @@ import torch
 
 
 #Change this to 'generation' to train on the joke-generation dataset.
-TASK = 'classification'
+TASK = 'generation'
 
 
 if 1:
@@ -17,10 +17,11 @@ if 1:
     
     #EDIT HERE, do not not touch epoch and learning rate values in Method_RNN.py
     max_epoch = 10 ##will overfit if too large because our datatset is not big
-    learning_rate = 1e-3
-    embedding_dim = 128
-    hidden_size = 128
+    learning_rate = 5e-4
+    embedding_dim = 256
+    hidden_size = 256
     batch_size = 64
+    num_layers = 1
     # ------------------------------------------------------
 
     # ---- object initialization section -------------------
@@ -59,6 +60,7 @@ if 1:
         embedding_dim=embedding_dim,
         hidden_size=hidden_size,
         batch_size=batch_size,
+        num_layers=num_layers,
         task=TASK
     )
     method_obj.max_epoch = max_epoch
@@ -94,8 +96,22 @@ if 1:
     print(result)
 
     if TASK == 'generation':
-        print('Generated example:')
-        print(method_obj.generate_joke('what did the', max_new_words=30)) 
+        print('Generated example 1:')
+        print(method_obj.generate_joke('Why did the', max_new_words=20))
+        print('Generated example 2:')
+        print(method_obj.generate_joke('What do you', max_new_words=20)) 
+        print('Generated example 3:')
+        print(method_obj.generate_joke('How many does', max_new_words=20)) 
+        print('Generated example 4:')
+        print(method_obj.generate_joke('A man walks', max_new_words=20)) 
+        print('Generated example 5:')
+        print(method_obj.generate_joke('Knock knock, whos', max_new_words=20)) 
+        print('Generated example 6:')
+        print(method_obj.generate_joke('What did the', max_new_words=20)) 
+        print('Generated example 7:')
+        print(method_obj.generate_joke('Why does the', max_new_words=20)) 
+        print('Generated example 8:')
+        print(method_obj.generate_joke('Have you heard', max_new_words=20))
         #can change max_new_words to whatever you wish
 
     print('************ Finish ************')

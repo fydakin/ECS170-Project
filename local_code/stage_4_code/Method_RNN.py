@@ -79,7 +79,7 @@ class Method_RNN(method, nn.Module):
             embedding_dim=self.embedding_dim,
             padding_idx=pad_index
         )
-        self.rnn = nn.RNN( #change to nn.LSTM(...) or nn.GRU(...) later
+        self.rnn = nn.GRU( #change to nn.LSTM(...) or nn.GRU(...) later
             input_size=self.embedding_dim,
             hidden_size=self.hidden_size,
             num_layers=self.num_layers,
